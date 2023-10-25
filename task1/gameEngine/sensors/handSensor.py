@@ -1,9 +1,8 @@
 import cv2
 import mediapipe as mp
 import logging
-import numpy as np
 from multiprocessing import Queue
-
+from ..config import *
 
 class HandSensor:
 
@@ -12,43 +11,55 @@ class HandSensor:
         self.queue = Queue(maxsize=max_queue_size)
 
         self.BaseOptions = mp.tasks.BaseOptions
-        self.HandLandmarker = mp.tasks.vision.HandLandmarker
-        self.HandLandmarkerOptions = mp.tasks.vision.HandLandmarkerOptions
-        self.HandLandmarkerResult = mp.tasks.vision.HandLandmarkerResult
+        self.GestureRecognizer = mp.tasks.vision.GestureRecognizer
+        self.GestureRecognizerOptions = mp.tasks.vision.GestureRecognizerOptions
+        self.GestureRecognizerResult = mp.tasks.vision.GestureRecognizerResult
         self.VisionRunningMode = mp.tasks.vision.RunningMode
 
         self.video = cv2.VideoCapture(0)
         self.timeStamp = 0
 
-        self.options = self.HandLandmarkerOptions(
+        self.options = self.GestureRecognizerOptions(
             # Giving a relative path for the model is not safe.
             base_options=self.BaseOptions(
-                model_asset_path='gameEngine/sensors/hand_landmarker.task'),
+                model_asset_path='gameEngine/sensors/gesture_recognizer.task'),
             running_mode=self.VisionRunningMode.LIVE_STREAM,
+            num_hands = MAXNUM_HANDS,
             result_callback=self.resultCallback
         )
-        self.result = None
-        self.palmCenter = np.zeros((2,))
+        self.resultReady = False
+        self.palmCenter = [[0, 0] for _ in range(MAXNUM_HANDS)]
+        self.isClosed = [False for _ in range(MAXNUM_HANDS)]
+        self.numOfHands = 0
         logging.info(' Hand sensor initialization done.')
 
     def resultCallback(self,
-                       result: mp.tasks.vision.HandLandmarkerResult,
+                       result: mp.tasks.vision.GestureRecognizerResult,
                        output_image: mp.Image, timestamp_ms: int) -> int:
 
-        knuckles = None
-        if result.hand_landmarks:
-            knuckles = result.hand_landmarks[0]
-
-        if knuckles and len(knuckles) == 21:
-            xc, yc = 0, 0
-            for i in [0, 5, 9, 13, 17]:
-                xc += knuckles[i].x / 5
-                yc += knuckles[i].y / 5
-            self.palmCenter[0], self.palmCenter[1] = xc, yc
-        self.result = result
+        self.numOfHands = len(result.gestures)
+        if not self.numOfHands:
+            return
+        
+        for i in range(len(result.gestures)):
+            top_gesture = result.gestures[i][0]
+            if top_gesture.category_name != 'Open_Palm':
+                self.isClosed[i] = True
+            else:
+                self.isClosed[i] = False
+            
+            knuckles = result.hand_landmarks[i]
+            if knuckles and len(knuckles) == 21:
+                xc, yc = 0, 0
+                for j in [0, 5, 9, 13, 17]:
+                    xc += knuckles[j].x / 5
+                    yc += knuckles[j].y / 5
+                self.palmCenter[i][0], self.palmCenter[i][1] = xc * SCREEN_WIDTH, yc * SCREEN_HEIGHT
+        
+        self.resultReady = True
 
     def initialize(self):
-        self.recognizer = self.HandLandmarker.create_from_options(self.options)
+        self.recognizer = self.GestureRecognizer.create_from_options(self.options)
         return self.recognizer
 
     def destruct(self):
@@ -63,18 +74,20 @@ class HandSensor:
             return
 
         self.timeStamp += 1
+        frame = cv2.flip(frame, 1)
         mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame)
 
-        self.result = None
-        self.recognizer.detect_async(mp_image, self.timeStamp)
+        self.resultReady = False
+        self.recognizer.recognize_async(mp_image, self.timeStamp)
 
+        
         # Sync / Wait until result is ready
-        while not self.result:
-            continue
+        # while not self.resultReady:
+        #     continue
+        
+        logging.debug('Hand Landmarker Result:\n{}'.format(self.palmCenter))
 
-        logging.debug('Hand Landmarker Result:\n{}'.format(self.result))
-
-        return (self.result, frame)
+        return (self.numOfHands, self.isClosed, self.palmCenter, frame)
 
     def asyncLoop(self):
 
@@ -86,4 +99,4 @@ class HandSensor:
                 if not result:
                     break
 
-                self.queue.put((self.palmCenter, result[1]))
+                self.queue.put(result)
