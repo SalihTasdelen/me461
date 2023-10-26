@@ -4,13 +4,10 @@ from multiprocessing import Process, Queue
 import pygame
 from gameEngine.sensors.handSensor import HandSensor
 from gameEngine.gameLoop import GameLoop
+from gameEngine.config import *
 
 # MP
 MAX_QUEUE_SIZE = 256
-
-# WINDOW SIZE
-HEIGHT = 600
-WIDTH = 800
 
 # Logging
 level = logging.INFO
@@ -25,7 +22,7 @@ if __name__ == '__main__':
     pygame.init()
 
     sensor = HandSensor(max_queue_size=256)    
-    screen = pygame.display.set_mode([WIDTH, HEIGHT])
+    screen = pygame.display.set_mode([SCREEN_WIDTH, SCREEN_HEIGHT])
 
     gl = GameLoop(sensor, screen, max_fps= FPS_CAP)
     gl.start()
