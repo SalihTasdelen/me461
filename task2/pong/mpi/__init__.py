@@ -4,9 +4,9 @@ from types import SimpleNamespace
 # TCP/IP Settings
 HEADER = 64
 SERVER_PORT = 5050
-HOST = socket.gethostbyname(socket.gethostname())
+HOST = '192.168.1.122' # socket.gethostbyname(socket.gethostname())
 SERVER_ADDR = (HOST, SERVER_PORT)
-MAX_QUEUE_SIZE = 256
+MAX_QUEUE_SIZE = 2
 
 # PACKAGE Settings
 FORMAT = 'UTF-8'

@@ -16,11 +16,11 @@ def main():
         pongServer.gameLoop()
     elif role == 'client':
         client = ConnectingPipe()
-        pongClient = PongClient(client, SERVER_ADDR)
+        pongClient = PongClient(client, SERVER_ADDR, maxDx=100, maxLagTime=100e-3)
         pongClient.gameLoop()
         pongClient.quit()
     else:
-        print("Invalid input. Please enter 'server' or 'client'.")
+        logging.error("[MAIN] Invalid input. Please enter 'server' or 'client'.")
 
 if __name__ == "__main__":
     main()

@@ -96,10 +96,10 @@ class PongServer:
         # self.checkPlayers()
         # Send game state to both clients
         for i in range(self.server.maxConnection):
+            pkg = Package.encode(
+                self.game.getState(i),
+                PACKAGE_T.GAME_TICK,
+                self.server.socket.getsockname()[1]
+            )
             if self.server.available(i):
-                pkg = Package.encode(
-                    self.game.getState(i),
-                    PACKAGE_T.GAME_TICK,
-                    self.server.socket.getsockname()[1]
-                )
                 self.server.send(i, pkg)

@@ -1,18 +1,21 @@
 import pygame
 from pygame.locals import *
+import logging
 from ..mpi.pipe import ConnectingPipe
 from ..mpi.package import Package, PACKAGE_T
 from .config import *
 from .gameState import GameState
 
 class PongClient:
-    def __init__(self, client: ConnectingPipe, addr):
+    def __init__(self, client: ConnectingPipe, addr, maxDx, maxLagTime):
         self.client = client
         self.addr = addr
         self.client.listen([addr])
 
         super().__init__()
         self.game = GameState()
+        self.firstUpdate = True
+        self.maxDx = maxDx
 
     def gameLoop(self):
         pygame.init()
@@ -49,6 +52,7 @@ class PongClient:
     def quit(self):
         pygame.quit()
         self.client.close()
+        logging.info('[PONG CLIENT] Quitting.')
 
 
     def sendInput(self):
@@ -63,7 +67,15 @@ class PongClient:
         if self.client.available(0) and self.client.receivable(0):
             pkg: Package = self.client.getLastRecv(0)
             if pkg.type == PACKAGE_T.GAME_TICK:
+                if abs(self.game.paddles[0].rect.y - pkg.data['ply1'][1]) > self.maxDx:
+                    logging.warning('[PONG CLIENT] Input lag detected.')
+                if self.firstUpdate:
+                    self.firstUpdate = False
+                    self.game.setState(pkg.data)
+                    return    
+                pkg.data['ply1'] = self.game.paddles[0].rect.x, self.game.paddles[0].rect.y
                 self.game.setState(pkg.data)
+                
                         
     
     def render(self):
