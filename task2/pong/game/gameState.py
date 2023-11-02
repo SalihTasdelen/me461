@@ -39,9 +39,9 @@ class GameState:
     def setState(self, data: dict):
         self.ball.rect.centerx = data['ball'][0]
         self.ball.rect.centery = data['ball'][1]
-        self.paddles[0].rect.x = data['ply1'][0]
-        self.paddles[0].rect.y = data['ply1'][1]
-        self.paddles[1].rect.x = data['ply2'][0]
-        self.paddles[1].rect.y = data['ply2'][1]
+        self.paddles[0].rect.x = 0.1 * self.paddles[0].rect.x + 0.9 * data['ply1'][0]
+        self.paddles[0].rect.y = 0.1 * self.paddles[0].rect.y + 0.9 * data['ply1'][1]
+        self.paddles[1].rect.x = 0.1 * self.paddles[1].rect.x + data['ply2'][0]
+        self.paddles[1].rect.y = 0.1 * self.paddles[1].rect.x + data['ply2'][1]
        
         print(f'P1 : {self.paddles[0].rect.y}, P2 : {self.paddles[1].rect.y}')

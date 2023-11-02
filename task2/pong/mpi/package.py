@@ -20,7 +20,7 @@ class Package:
         # Hard codded port validity check.
         if self.port < 1024 or self.port > 65536:
             return False
-        if not self.data:
+        if self.data == None:
             return False
         # if self.type not in PACKAGE_T.__dict__:
         #     return False

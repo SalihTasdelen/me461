@@ -23,11 +23,18 @@ class PongClient:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.game.running = False
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_UP:
-                        self.game.paddles[0].setPos(WIDTH//2, 100)
-                    if event.key == pygame.K_DOWN:
-                        self.game.paddles[0].setPos(WIDTH//2, 400)
+                
+            if pygame.mouse.get_pressed()[0]:
+                y = pygame.mouse.get_pos()[1]
+                self.game.paddles[0].setPos(
+                    self.game.paddles[0].rect.x,
+                    y
+                )
+                # if event.type == pygame.KEYDOWN:
+                #     if event.key == pygame.K_UP:
+                #         self.game.paddles[0].setPos(WIDTH//2, 100)
+                #     if event.key == pygame.K_DOWN:
+                #         self.game.paddles[0].setPos(WIDTH//2, 400)
             # Send user input to the server
             self.sendInput()
 
