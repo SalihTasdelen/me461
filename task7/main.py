@@ -48,7 +48,6 @@ class Solve8():
         one after the other
         movez should contain the minimum number of moves needed to solve the puzzle
         '''
-        previous_boards = defaultdict(bool)
         board = tile.Board.copy().reshape(9)
         
         previous_boards = defaultdict(bool)
@@ -57,7 +56,6 @@ class Solve8():
         state = np.array([(board, 'n', -1, 0, hn)], self.STATE)
         priority = np.array( [(0, hn)], self.PRIORITY)
         found = False
-        i = 1
         while True:
             priority = np.sort(priority, kind='mergesort', order=['fn', 'pos'])
             pos, fn = priority[0]
